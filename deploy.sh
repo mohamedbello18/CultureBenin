@@ -59,3 +59,7 @@ chmod -R 775 /var/www/html/storage
 # Démarrer Apache en premier plan
 echo "🌍 Démarrage du serveur web..."
 exec apache2-foreground
+
+# Configure Apache to use the port provided by Render
+echo "Configuring Apache to listen on port ${PORT}..."
+sed -i "s/^Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf
