@@ -33,7 +33,7 @@ fi
 
 # Installer les assets (si vous utilisez Laravel Mix/Vite)
 # echo "📦 Installation des assets..."
-npm install --production
+npm install 
 npm run build
 
 # Définir les permissions
