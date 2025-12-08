@@ -2,35 +2,37 @@
 
 echo "🚀 Démarrage du déploiement Laravel..."
 
-# Vérifier si .env existe, sinon le créer depuis .env.example
+# Attendre que la base de données soit prête (si nécessaire)
+# echo "⏳ Attente de la base de données..."
+# while ! nc -z $DB_HOST $DB_PORT; do
+#   sleep 0.5
+# done
+# echo "✅ Base de données disponible"
+
+# Créer le fichier .env à partir des variables d'environnement
 if [ ! -f .env ]; then
-    echo "📝 Création du fichier .env depuis .env.example..."
+    echo "📝 Création du fichier .env..."
     cp .env.example .env
 fi
 
-# S'assurer que le fichier .env a un APP_KEY
-if ! grep -q "^APP_KEY=" .env; then
-    echo "APP_KEY=" >> .env
-fi
-
-# Générer la clé d'application si elle n'existe pas ou est vide
-APP_KEY_VALUE=$(grep "^APP_KEY=" .env | cut -d= -f2)
-if [ -z "$APP_KEY_VALUE" ] || [ "$APP_KEY_VALUE" = "" ]; then
+# Générer la clé d'application si elle n'existe pas
+if [ -z "$(grep '^APP_KEY=' .env)" ] || [ "$(grep '^APP_KEY=' .env | cut -d= -f2)" = "" ]; then
     echo "🔑 Génération de la clé d'application..."
     php artisan key:generate --force
 fi
 
-# Installer les dépendances npm (si package.json existe)
-if [ -f "package.json" ]; then
-    echo "📦 Installation des dépendances npm..."
-    npm ci --only=production
-fi
+# Mettre à jour les variables d'environnement dans .env
+echo "⚙️ Configuration de l'environnement..."
+sed -i "s/^APP_ENV=.*/APP_ENV=${APP_ENV:-production}/" .env
+sed -i "s/^APP_DEBUG=.*/APP_DEBUG=${APP_DEBUG:-false}/" .env
+sed -i "s/^APP_URL=.*/APP_URL=${APP_URL:-http:\/\/localhost}/" .env
 
-# Build les assets (si nécessaire)
-if [ -f "package.json" ] && [ -f "vite.config.js" -o -f "webpack.mix.js" ]; then
-    echo "🔨 Build des assets..."
-    npm run build
-fi
+sed -i "s/^DB_CONNECTION=.*/DB_CONNECTION=${DB_CONNECTION:-mysql}/" .env
+sed -i "s/^DB_HOST=.*/DB_HOST=${DB_HOST:-127.0.0.1}/" .env
+sed -i "s/^DB_PORT=.*/DB_PORT=${DB_PORT:-3306}/" .env
+sed -i "s/^DB_DATABASE=.*/DB_DATABASE=${DB_DATABASE:-laravel}/" .env
+sed -i "s/^DB_USERNAME=.*/DB_USERNAME=${DB_USERNAME:-root}/" .env
+sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=${DB_PASSWORD:-}/" .env
 
 # Nettoyer le cache
 echo "🧹 Nettoyage du cache..."
@@ -45,21 +47,23 @@ if [ "${APP_ENV:-production}" = "production" ]; then
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache
+    php artisan event:cache
 fi
+
+# Exécuter les migrations (optionnel - décommenter si besoin)
+# echo "🔄 Exécution des migrations..."
+# php artisan migrate --force
+
+# Installer les assets (si vous utilisez Laravel Mix/Vite)
+echo "📦 Installation des assets..."
+npm install --production
+npm run build
 
 # Définir les permissions
 echo "🔒 Configuration des permissions..."
 chmod -R 775 storage bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache public
 
-# Dans deploy.sh, ajoutez avant de démarrer Apache:
-chown -R www-data:www-data /var/www/html/storage
-chmod -R 775 /var/www/html/storage
-
 # Démarrer Apache en premier plan
 echo "🌍 Démarrage du serveur web..."
 exec apache2-foreground
-
-# Configure Apache to use the port provided by Render
-echo "Configuring Apache to listen on port ${PORT}..."
-sed -i "s/^Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf
