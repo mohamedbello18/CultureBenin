@@ -2,18 +2,35 @@
 
 echo "🚀 Démarrage du déploiement Laravel..."
 
-# Créer le fichier .env à partir des variables d'environnement
+# Vérifier si .env existe, sinon le créer depuis .env.example
 if [ ! -f .env ]; then
-    echo "📝 Création du fichier .env..."
+    echo "📝 Création du fichier .env depuis .env.example..."
     cp .env.example .env
 fi
 
-# Générer la clé d'application si elle n'existe pas
-if [ -z "$(grep '^APP_KEY=' .env)" ] || [ "$(grep '^APP_KEY=' .env | cut -d= -f2)" = "" ]; then
+# S'assurer que le fichier .env a un APP_KEY
+if ! grep -q "^APP_KEY=" .env; then
+    echo "APP_KEY=" >> .env
+fi
+
+# Générer la clé d'application si elle n'existe pas ou est vide
+APP_KEY_VALUE=$(grep "^APP_KEY=" .env | cut -d= -f2)
+if [ -z "$APP_KEY_VALUE" ] || [ "$APP_KEY_VALUE" = "" ]; then
     echo "🔑 Génération de la clé d'application..."
     php artisan key:generate --force
 fi
 
+# Installer les dépendances npm (si package.json existe)
+if [ -f "package.json" ]; then
+    echo "📦 Installation des dépendances npm..."
+    npm ci --only=production
+fi
+
+# Build les assets (si nécessaire)
+if [ -f "package.json" ] && [ -f "vite.config.js" -o -f "webpack.mix.js" ]; then
+    echo "🔨 Build des assets..."
+    npm run build
+fi
 
 # Nettoyer le cache
 echo "🧹 Nettoyage du cache..."
@@ -28,15 +45,7 @@ if [ "${APP_ENV:-production}" = "production" ]; then
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache
-    php artisan event:cache
 fi
-
-php artisan serve --host=0.0.0.0 --port=${PORT}
-
-# Installer les assets (si vous utilisez Laravel Mix/Vite)
-# echo "📦 Installation des assets..."
-npm install --production
-npm run build
 
 # Définir les permissions
 echo "🔒 Configuration des permissions..."
