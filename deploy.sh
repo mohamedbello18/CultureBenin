@@ -31,6 +31,8 @@ if [ "${APP_ENV:-production}" = "production" ]; then
     php artisan event:cache
 fi
 
+php artisan serve --host=0.0.0.0 --port=${PORT}
+
 # Installer les assets (si vous utilisez Laravel Mix/Vite)
 # echo "📦 Installation des assets..."
 npm install --production
