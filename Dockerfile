@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libpq-dev \
     libzip-dev \
-    nodejs \
-    npm \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -52,22 +50,15 @@ COPY . .
 # 9. Installer les dépendances Composer (sans dev)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# 10. Installer les dépendances npm (si package.json existe)
-COPY package*.json ./
-RUN if [ -f "package.json" ]; then npm ci --only=production; fi
-
-# 11. Build les assets (si nécessaire)
-RUN if [ -f "package.json" ] && [ -f "vite.config.js" -o -f "webpack.mix.js" ]; then npm run build; fi
-
-# 12. Définir les permissions
+# 10. Définir les permissions
 RUN chown -R www-data:www-data /var/www/html/storage
 RUN chmod -R 775 /var/www/html/storage
 RUN chmod -R 775 /var/www/html/bootstrap/cache
 
-# 13. Exposer le port
+# 11. Exposer le port
 EXPOSE 80
 
-# 14. Script de démarrage
+# 12. Script de démarrage
 COPY deploy.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/deploy.sh
 ENTRYPOINT ["deploy.sh"]
