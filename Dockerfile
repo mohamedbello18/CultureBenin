@@ -48,14 +48,14 @@ WORKDIR /var/www/html
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# 9. Install npm dependencies if package.json exists
+# 9. Install npm dependencies and build assets
 RUN if [ -f "package.json" ]; then \
-    npm ci --only=production || echo "npm install failed, continuing..."; \
+    npm install && npm run build; \
     fi
 
 # 10. Set CORRECT permissions (critical fix!)
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html \
+    && chmod -R 755 /var/w ww/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 

@@ -14,11 +14,12 @@ services:
       - key: LOG_CHANNEL
         value: stderr
       - key: APP_KEY
-        sync: false  # Set this to your actual key in Render dashboard
+        sync: false
       - key: APP_URL
         value: https://culturebenin-op79.onrender.com
       - key: DB_CONNECTION
-        value: sqlite  # Or configure your database
+        value: sqlite
+    preDeployCommand:
     healthCheckPath: /
     autoDeploy: true
     buildFilter:
