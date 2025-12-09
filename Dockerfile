@@ -4,7 +4,7 @@ FROM php:8.2-apache
 ENV PORT=10000
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
-# 1. Install system dependencies + Node.js
+# 1. Install system dependencies + Node.js (Updated to Node.js 20)
 RUN apt-get update && apt-get install -y \
     curl \
     libpng-dev \
@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     gnupg \
     ca-certificates \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -55,7 +55,7 @@ RUN if [ -f "package.json" ]; then \
 
 # 10. Set CORRECT permissions (critical fix!)
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/w ww/html \
+    && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
