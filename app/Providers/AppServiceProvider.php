@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        
+        if (app()->environment('production')) {
+            \URL::forceScheme('https');
+        }
         Blade::directive('adminRoute', function ($expression) {
             // $expression est le nom de la route sans 'admin.' (ex: 'langues.create')
             // Nous retournons une instruction PHP qui ajoute 'admin.' et appelle la fonction route()
